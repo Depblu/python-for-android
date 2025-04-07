@@ -367,7 +367,8 @@ class Bootstrap:
             shprint(sh.cp, '-a', *so_files, so_tgt_dir)
 
     def strip_libraries(self, arch):
-        info('Stripping libraries')
+        info('skip Stripping libraries')
+        return
         env = arch.get_env()
         tokens = shlex.split(env['STRIP'])
         strip = sh.Command(tokens[0])

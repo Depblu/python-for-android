@@ -3,7 +3,7 @@ from pythonforandroid.recipe import MesonRecipe
 
 
 class PandasRecipe(MesonRecipe):
-    version = 'v2.2.1'
+    version = 'v2.2.3'
     url = 'git+https://github.com/pandas-dev/pandas'  # noqa
     depends = ['numpy', 'libbz2', 'liblzma']
     hostpython_prerequisites = ["Cython~=3.0.5"]  # meson does not detects venv's cython
@@ -17,7 +17,7 @@ class PandasRecipe(MesonRecipe):
         # because we need some includes generated at numpy's compile time
 
         env['NUMPY_INCLUDES'] = join(
-            self.ctx.get_python_install_dir(arch.arch), "numpy/core/include",
+            self.ctx.get_python_install_dir(arch.arch), "numpy/_core/include",
         )
         env["PYTHON_INCLUDE_DIR"] = self.ctx.python_recipe.include_root(arch)
 

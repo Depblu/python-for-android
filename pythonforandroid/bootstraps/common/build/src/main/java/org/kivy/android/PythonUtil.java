@@ -49,6 +49,7 @@ public class PythonUtil {
         addLibraryIfExists(libsList, "SDL2_image", libsDir);
         addLibraryIfExists(libsList, "SDL2_mixer", libsDir);
         addLibraryIfExists(libsList, "SDL2_ttf", libsDir);
+        libsList.add("jni_dlopen_global");
         libsList.add("python3.5m");
         libsList.add("python3.6m");
         libsList.add("python3.7m");
@@ -66,9 +67,28 @@ public class PythonUtil {
         for (String lib : getLibraries(libsDir)) {
             Log.v(TAG, "Loading library: " + lib);
             try {
-                System.loadLibrary(lib);
                 if (lib.startsWith("python")) {
-                    foundPython = true;
+                    // 对Python库使用RTLD_GLOBAL标志加载
+                    String libPath = System.mapLibraryName(lib);
+                    File libFile = new File(libsDir, libPath);
+                    
+                    if (libFile.exists()) {
+                        boolean success = loadLibraryGlobal(libFile.getAbsolutePath());
+                        if (success) {
+                            foundPython = true;
+                            Log.v(TAG, "Loaded Python library with RTLD_GLOBAL: " + lib);
+                        } else {
+                            Log.e(TAG, "Failed to load Python library with RTLD_GLOBAL: " + lib);
+                            continue;
+                        }
+                    } else {
+                        // 尝试使用标准方式加载
+                        System.loadLibrary(lib);
+                        foundPython = true;
+                    }
+                } else {
+                    // 非Python库使用原来的方式加载
+                    System.loadLibrary(lib);
                 }
             } catch(UnsatisfiedLinkError e) {
                 // If this is the last possible libpython
@@ -257,4 +277,6 @@ public class PythonUtil {
             }
         }
     }
+
+    public static native boolean loadLibraryGlobal(String path);
 }

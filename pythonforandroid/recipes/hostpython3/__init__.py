@@ -139,6 +139,23 @@ class HostPython3Recipe(Recipe):
                     break
 
         self.ctx.hostpython = self.python_exe
+        
+        # # 安装pip到正确的位置
+        # with current_directory(build_dir):
+        #     # 强制设置HOME环境变量以隔离pip配置
+        #     print(build_dir)
+        #     base_path = self.ctx.hostpython.rsplit('python3', 1)[0]
+        #     env['PYTHONPATH'] = base_path + 'Lib/site-packages'
+        #     print(base_path)
+        #     print("$$$$$$$$$ install pip")
+        #     print(shprint(sh.Command(self.python_exe), '-s', '-m', 'ensurepip', '--upgrade', _env=env))
+        #     print("$$$$$$$$$ -m site")
+        #     print(shprint(sh.Command(self.python_exe), '-s', '-m', 'site', _env=env))
+        #     print("$$$$$$$$$ install scikit_build_core")
+        #     print(shprint(sh.Command(self.python_exe), '-s', '-m', 'pip', 'install', 'scikit_build_core', _env=env))
 
+    # def postbuild_arch(self, arch):
+    #     super().prebuild_arch(self)
+    #     shprint(sh.Command(self.ctx.hostpython), '-m', 'ensurepip')
 
 recipe = HostPython3Recipe()

@@ -122,6 +122,11 @@ class Distribution:
                     f"dist {dist} failed to match ndk_api, target api {ndk_api}, dist api {dist.ndk_api}"
                 )
                 continue
+            
+            #ls add 20250402 
+            #用户传递的requirements中可能包含大写字符，而dist中的recipes是小写
+            recipes = [recipe.lower() for recipe in recipes]
+            
             for recipe in recipes:
                 if recipe not in dist.recipes:
                     debug(f"dist {dist} missing recipe {recipe}")

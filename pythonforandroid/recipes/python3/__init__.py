@@ -212,11 +212,15 @@ class Python3Recipe(TargetPythonRecipe):
         env['CFLAGS'] = ' '.join(
             [
                 '-fPIC',
-                '-DANDROID'
+                '-DANDROID',
+                '-UHAVE_LIBB2'
             ]
         )
 
         env['LDFLAGS'] = env.get('LDFLAGS', '')
+        
+        env['LIBB2_LIBS'] = ' '
+        
         if shutil.which('lld') is not None:
             # Note: The -L. is to fix a bug in python 3.7.
             # https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=234409
@@ -335,6 +339,21 @@ class Python3Recipe(TargetPythonRecipe):
                                     prefix=sys_prefix,
                                     exec_prefix=sys_exec_prefix)).split(' '),
                     _env=env)
+
+
+            # -------- 在这里添加 sed 命令 --------
+            # 定位 configure 生成的 pyconfig.h 文件 (通常在构建子目录中)
+            # 根据你的 ls 结果，它在 'android-build' 子目录下
+            pyconfig_h = Path(f'{build_dir}/pyconfig.h')
+
+            if pyconfig_h.exists():
+                info(f"Patching {pyconfig_h} to remove HAVE_LIBB2 definition")
+                # 使用 sed 删除包含 '#define HAVE_LIBB2 1' 的行 (允许一些空格变化)
+                shprint(sh.sed, '-i', r'/^[ \t]*#define[ \t]\+HAVE_LIBB2[ \t]\+1[ \t]*$/d', str(pyconfig_h), _env=env)
+            else:
+                warning(f"Could not find {pyconfig_h} to patch.")
+            # -------- sed 命令结束 --------
+
 
             # Python build does not seem to play well with make -j option from Python 3.11 and onwards
             # Before losing some time, please check issue

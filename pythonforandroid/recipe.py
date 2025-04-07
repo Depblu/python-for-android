@@ -263,7 +263,11 @@ class Recipe(metaclass=RecipeMeta):
             with current_directory(target):
                 if self.version:
                     shprint(sh.git, 'fetch', '--tags', '--depth', '1')
-                    shprint(sh.git, 'checkout', self.version)
+                    try:
+                        shprint(sh.git, 'checkout', self.version)
+                    except Exception as e:
+                        print("error checkout with version", self.version, e, "try add v to version")
+                        shprint(sh.git, 'checkout', 'v' + self.version)
                 branch = sh.git('branch', '--show-current')
                 if branch:
                     shprint(sh.git, 'pull')
@@ -1001,6 +1005,7 @@ class PythonRecipe(Recipe):
     def install_hostpython_package(self, arch):
         env = self.get_hostrecipe_env(arch)
         real_hostpython = sh.Command(self.real_hostpython_location)
+        print("lius real_hostpython_location: ", self.real_hostpython_location)
         shprint(real_hostpython, 'setup.py', 'install', '-O2',
                 '--root={}'.format(dirname(self.real_hostpython_location)),
                 '--install-lib=Lib/site-packages',
@@ -1257,6 +1262,7 @@ class PyProjectRecipe(PythonRecipe):
             wf.close()
 
     def build_arch(self, arch):
+        print("/////////////", self.hostpython_prerequisites)
         self.install_hostpython_prerequisites(
             packages=["build[virtualenv]", "pip"] + self.hostpython_prerequisites
         )
@@ -1278,6 +1284,11 @@ class PyProjectRecipe(PythonRecipe):
 
         built_wheels = []
         with current_directory(build_dir):
+            print("/////////////", self.ctx.python_recipe.python_exe, *build_args)
+            print("////////// env export commands:")
+            for key, value in env.items():
+                print(f"export {key}='{value}'")
+            print("/////////////")
             shprint(
                 sh.Command(self.ctx.python_recipe.python_exe), *build_args, _env=env
             )

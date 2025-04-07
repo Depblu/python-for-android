@@ -754,7 +754,7 @@ def run_pymodules_install(ctx, arch, modules, project_dir=None,
 
             shprint(sh.bash, '-c', (
                 "venv/bin/pip " +
-                "install -v --target '{0}' --no-deps -r requirements.txt"
+                "install -v --target '{0}' -r requirements.txt"
             ).format(ctx.get_site_packages_dir(arch).replace("'", "'\"'\"'")),
                     _env=copy.copy(env))
 
