@@ -2,12 +2,12 @@ from pythonforandroid.recipe import PyProjectRecipe, Recipe
 
 
 class GrpcioRecipe(PyProjectRecipe):
-    version = '1.64.0'
+    version = '1.71.0'
     url = 'https://files.pythonhosted.org/packages/source/g/grpcio/grpcio-{version}.tar.gz'
     depends = ["setuptools", "librt", "libpthread"]
     patches = [
         "comment-getserverbyport-r-args.patch",
-        "remove-android-log-write.patch",
+        #"remove-android-log-write.patch",
         "use-ndk-zlib-and-openssl-recipe-include.patch"
     ]
 
@@ -27,6 +27,10 @@ class GrpcioRecipe(PyProjectRecipe):
         env["PLATFORM"] = "android"
         env["LDFLAGS"] += " -llog -landroid"
         env["LDFLAGS"] += openssl_recipe.link_flags(arch)
+        
+        env["GRPC_PYTHON_CFLAGS"] = env["CFLAGS"]
+        env["GRPC_PYTHON_LDFLAGS"] = env["LDFLAGS"]
+
         return env
 
 

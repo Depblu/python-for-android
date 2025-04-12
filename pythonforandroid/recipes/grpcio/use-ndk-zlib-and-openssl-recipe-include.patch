@@ -1,6 +1,6 @@
 --- a/setup.py	2024-05-31 11:20:56.824695569 +0100
 +++ b/setup.py	2024-05-31 23:13:40.324392463 +0100
-@@ -299,11 +299,11 @@
+@@ -318,11 +318,11 @@
          lambda x: "third_party/boringssl" not in x, CORE_C_FILES
      )
      CORE_C_FILES = filter(lambda x: "src/boringssl" not in x, CORE_C_FILES)

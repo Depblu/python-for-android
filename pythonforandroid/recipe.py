@@ -381,6 +381,7 @@ class Recipe(metaclass=RecipeMeta):
     def download_if_necessary(self):
         info_main('Downloading {}'.format(self.name))
         user_dir = environ.get('P4A_{}_DIR'.format(self.name.lower()))
+        print("user_dir: ", user_dir)
         if user_dir is not None:
             info('P4A_{}_DIR is set, skipping download for {}'.format(
                 self.name, self.name))
@@ -1062,6 +1063,12 @@ class CompiledComponentsPythonRecipe(PythonRecipe):
         info('Building compiled components in {}'.format(self.name))
 
         env = self.get_recipe_env(arch)
+        
+        print("////////// env export commands:")
+        for key, value in env.items():
+            print(f"export {key}='{value}'")
+        print("/////////////")
+        
         hostpython = sh.Command(self.hostpython_location)
         with current_directory(self.get_build_dir(arch.arch)):
             if self.install_in_hostpython:

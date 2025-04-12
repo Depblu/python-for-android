@@ -128,15 +128,17 @@ class Arch:
             env['CFLAGS'] += ' ' + ' '.join(self.arch_cflags)
         env['CXXFLAGS'] = env['CFLAGS']
 
-        # CPPFLAGS (for macros and includes)
+        # CPPFLAGS (for macros and includes)     
         env['CPPFLAGS'] = ' '.join(self.common_cppflags).format(
             ctx=self.ctx,
             command_prefix=self.command_prefix,
             python_includes=join(
-                self.ctx.get_python_install_dir(self.arch),
-                'include/python{}'.format(self.ctx.python_recipe.version[0:3]),
+                #self.ctx.get_python_install_dir(self.arch),
+                self.ctx.python_recipe.include_root(self.arch),
+                #'include/python{}'.format(self.ctx.python_recipe.version[0:4]),
             ),
         )
+        print("liuslog", "env['CPPFLAGS']", env['CPPFLAGS'])
 
         # LDFLAGS: Link the extra global link paths first before anything else
         # (such that overriding system libraries with them is possible)

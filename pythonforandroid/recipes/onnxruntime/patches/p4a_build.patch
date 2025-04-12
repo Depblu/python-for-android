@@ -1,0 +1,184 @@
+diff --git a/cmake/CMakeLists.txt b/cmake/CMakeLists.txt
+index 2714e6f59..81d1600ac 100644
+--- a/cmake/CMakeLists.txt
++++ b/cmake/CMakeLists.txt
+@@ -5,6 +5,8 @@
+ # Minimum CMake required
+ cmake_minimum_required(VERSION 3.28)
+ 
++set(CMAKE_FIND_DEBUG_MODE TRUE)
++
+ # Don't let cmake set a default value for CMAKE_CUDA_ARCHITECTURES
+ cmake_policy(SET CMP0104 OLD)
+ # Project
+@@ -673,7 +675,8 @@ if (onnxruntime_BUILD_SHARED_LIB OR onnxruntime_ENABLE_PYTHON)
+     if (onnxruntime_REQUIRE_PYTHON_EMBED_LIB)
+       find_package(Python 3.10 COMPONENTS Interpreter Development NumPy)
+     else()
+-      find_package(Python 3.10 COMPONENTS Interpreter Development.Module NumPy)
++      # 尝试请求 Development 而不是 Development.Module 来强制创建 Python::Python 目标
++      find_package(Python 3.10 COMPONENTS Interpreter Development NumPy)
+     endif()
+     message("Numpy version: ${Python_NumPy_VERSION}")
+     if(Python_NumPy_VERSION VERSION_LESS "2.0.0")
+@@ -684,6 +687,142 @@ if (onnxruntime_BUILD_SHARED_LIB OR onnxruntime_ENABLE_PYTHON)
+   endif()
+ endif()
+ 
++
++
++# --- 检查 Python::Python 是否被成功创建和配置 ---
++if(TARGET Python::Python)
++  message(STATUS "Target 'Python::Python' was found by find_package(Python).")
++
++  # 检查 IMPORTED_LOCATION (指向库文件)
++  # 注意：对于多配置生成器 (如 Visual Studio, Xcode)，可能需要检查配置特定的属性
++  # 例如 get_target_property(_py_location Python::Python IMPORTED_LOCATION_${CMAKE_CFG_INTDIR})
++  # 对于单配置生成器 (如 Unix Makefiles, Ninja)，检查 IMPORTED_LOCATION 通常足够
++  get_target_property(_py_location Python::Python IMPORTED_LOCATION)
++  if(_py_location)
++    message(STATUS "  Python::Python IMPORTED_LOCATION: ${_py_location}")
++  else()
++    # 尝试检查 Release 配置下的属性（通常 Debug 会链接 Release 库）
++    get_target_property(_py_location_release Python::Python IMPORTED_LOCATION_RELEASE)
++    if(_py_location_release)
++      message(STATUS "  Python::Python IMPORTED_LOCATION_RELEASE: ${_py_location_release}")
++    else()
++      message(WARNING "  Could not get IMPORTED_LOCATION or IMPORTED_LOCATION_RELEASE for Python::Python.")
++    endif()
++  endif()
++
++  # 检查 INTERFACE_INCLUDE_DIRECTORIES (指向头文件目录)
++  get_target_property(_py_includes Python::Python INTERFACE_INCLUDE_DIRECTORIES)
++  if(_py_includes)
++    message(STATUS "  Python::Python INTERFACE_INCLUDE_DIRECTORIES: ${_py_includes}")
++  else()
++    message(WARNING "  Could not get INTERFACE_INCLUDE_DIRECTORIES for Python::Python.")
++  endif()
++
++else()
++  message(WARNING "Target 'Python::Python' was NOT found or created by find_package(Python). Linking will likely fail.")
++  # 你甚至可以在这里强制失败，如果 Python 是必须的
++  # message(FATAL_ERROR "Python::Python target is required but was not found.")
++endif()
++# --- 检查结束 ---
++
++
++##Need python to generate def file
++#if (onnxruntime_BUILD_SHARED_LIB OR onnxruntime_ENABLE_PYTHON)
++#  if (onnxruntime_ENABLE_PYTHON)
++#
++#    message(STATUS "[ORT Debug] Entering Python discovery block. onnxruntime_REQUIRE_PYTHON_EMBED_LIB=${onnxruntime_REQUIRE_PYTHON_EMBED_LIB}")
++#
++#    # --- 直接使用 hostpython3 和 venv NumPy 路径 ---
++#    # hostpython3 (由 p4a 构建)
++#    set(Python_INCLUDE_DIR "/home/lius/.local/share/python-for-android/build/other_builds/hostpython3/desktop/hostpython3/Include")
++#    # *** 请根据你的 find 命令结果确认 hostpython3 的库路径 ***
++#    set(Python_LIBRARY "/home/lius/.local/share/python-for-android/build/other_builds/python3/arm64-v8a__ndk_target_26/python3/android-build/libpython3.11.so") # 假设路径
++#
++#    # NumPy (来自你的 p4a_venv_311 环境)
++#    set(Python_NumPy_INCLUDE_DIRS "/home/lius/.local/share/python-for-android/build/other_builds/numpy/arm64-v8a__ndk_target_26/numpy/numpy/_core/include")
++#    # 尝试从 NumPy 版本获取信息 (可能需要 Python_EXECUTABLE 指向 venv Python)
++#    set(_PYTHON_EXECUTABLE_FOR_NUMPY "/home/lius/.local/share/python-for-android/build/other_builds/hostpython3/desktop/hostpython3/native-build/python3")
++#    execute_process(
++#        COMMAND ${_PYTHON_EXECUTABLE_FOR_NUMPY} -c "import numpy; print(numpy.__version__)"
++#        OUTPUT_VARIABLE Python_NumPy_VERSION
++#        OUTPUT_STRIP_TRAILING_WHITESPACE
++#        ERROR_QUIET)
++#
++#    # 验证文件和目录是否存在
++#    if(NOT EXISTS "${Python_INCLUDE_DIR}/Python.h")
++#        message(FATAL_ERROR "Manually specified Python include dir does not contain Python.h: ${Python_INCLUDE_DIR}")
++#    endif()
++#    if(NOT EXISTS "${Python_LIBRARY}")
++#        message(FATAL_ERROR "Manually specified Python library does not exist: ${Python_LIBRARY}")
++#    endif()
++#    if(NOT EXISTS "${Python_NumPy_INCLUDE_DIRS}/numpy/arrayobject.h")
++#        message(FATAL_ERROR "Manually specified NumPy include dir does not contain arrayobject.h: ${Python_NumPy_INCLUDE_DIRS}")
++#    endif()
++#
++#    message(STATUS "[ORT Debug] Using hostpython3 paths: Python_INCLUDE_DIR=${Python_INCLUDE_DIR}")
++#    message(STATUS "[ORT Debug] Using hostpython3 paths: Python_LIBRARY=${Python_LIBRARY}")
++#    message(STATUS "[ORT Debug] Using venv paths: Python_NumPy_INCLUDE_DIRS=${Python_NumPy_INCLUDE_DIRS}")
++#    message(STATUS "[ORT Debug] Using venv paths: Python_NumPy_VERSION=${Python_NumPy_VERSION}")
++#
++#    # --- 标记为已找到 ---
++#    # 因为我们手动指定了所有必需的路径，可以直接设置 FOUND 状态
++#    set(Python_FOUND TRUE)
++#    set(Python_Interpreter_FOUND TRUE) # 解释器通常能找到
++#    set(Python_Development_FOUND TRUE)
++#    set(Python_NumPy_FOUND TRUE)
++#
++#    # --- 设置 CMake IMPORTED Target ---
++#    # 需要手动创建 Python::NumPy 目标，因为它不会被 find_package 创建
++#    # 检查是否已存在，防止重复创建
++#    if(NOT TARGET Python::NumPy)
++#        add_library(Python::NumPy INTERFACE IMPORTED)
++#        set_target_properties(Python::NumPy PROPERTIES
++#            INTERFACE_INCLUDE_DIRECTORIES "${Python_NumPy_INCLUDE_DIRS}"
++#        )
++#        message(STATUS "[ORT Debug] Manually created Python::NumPy target.")
++#    endif()
++#    # 可能还需要手动创建 Python::Development (或类似目标)，如果链接时需要 Python 库
++#    if(NOT TARGET Python::Development)
++#        # 如果需要链接 libpython (通常不需要，除非是嵌入式)
++#        # add_library(Python::Development UNKNOWN IMPORTED)
++#        # set_target_properties(Python::Development PROPERTIES
++#        #     IMPORTED_LOCATION "${Python_LIBRARY}"
++#        #     INTERFACE_INCLUDE_DIRECTORIES "${Python_INCLUDE_DIR}"
++#        # )
++#        # 如果只需要头文件
++#         add_library(Python::Development INTERFACE IMPORTED)
++#         set_target_properties(Python::Development PROPERTIES
++#             INTERFACE_INCLUDE_DIRECTORIES "${Python_INCLUDE_DIR}"
++#         )
++#        message(STATUS "[ORT Debug] Manually created Python::Development target.")
++#    endif()
++#
++#    # --- 无需再调用 find_package ---
++#    # message(STATUS "[ORT Debug] Attempting: find_package(Python 3.10 COMPONENTS Interpreter Development NumPy REQUIRED)")
++#    # find_package(Python 3.10 COMPONENTS Interpreter Development NumPy REQUIRED)
++#
++#    message(STATUS "[ORT Debug] After manual setup: Python_FOUND='${Python_FOUND}'")
++#    message(STATUS "[ORT Debug] After manual setup: Python_Development_FOUND='${Python_Development_FOUND}'")
++#    message(STATUS "[ORT Debug] After manual setup: Python_NumPy_FOUND='${Python_NumPy_FOUND}'")
++#    message(STATUS "[ORT Debug] After manual setup: Python_INCLUDE_DIRS='${Python_INCLUDE_DIR}'") # FindPython 可能会覆盖，先这样
++#    message(STATUS "[ORT Debug] After manual setup: Python_LIBRARIES='${Python_LIBRARY}'")
++#    message(STATUS "[ORT Debug] After manual setup: Python_NumPy_INCLUDE_DIRS='${Python_NumPy_INCLUDE_DIRS}'")
++#    message(STATUS "[ORT Debug] After manual setup: Python_NumPy_VERSION='${Python_NumPy_VERSION}'")
++#	
++#
++#
++#    message("Numpy version: ${Python_NumPy_VERSION}") # 原来的消息
++#    if(Python_NumPy_VERSION VERSION_LESS "2.0.0")
++#      message(WARNING "The build binary will not be compatible with NumPy 2.0 because the NumPy installed on this machine is too low.")
++#    endif()
++#
++#  else()
++#    find_package(Python 3.10 COMPONENTS Interpreter)
++#  endif()
++#endif()
++
++
++
+ #Dependencies begin
+ get_filename_component(ONNXRUNTIME_ROOT "${ONNXRUNTIME_ROOT}" ABSOLUTE)
+ get_filename_component(ORTTRAINING_ROOT "${ORTTRAINING_ROOT}" ABSOLUTE)
+diff --git a/cmake/onnxruntime_python.cmake b/cmake/onnxruntime_python.cmake
+index aee6d2ff7..d45989f81 100644
+--- a/cmake/onnxruntime_python.cmake
++++ b/cmake/onnxruntime_python.cmake
+@@ -256,9 +256,11 @@ if (onnxruntime_ENABLE_EXTERNAL_CUSTOM_OP_SCHEMAS)
+   else()
+     message(FATAL_ERROR "Required external libraries onnx and protobuf are not found in onnxruntime_EXTERNAL_LIBRARIES")
+   endif()
+-  target_link_libraries(onnxruntime_pybind11_state PRIVATE ${onnxruntime_CUSTOM_EXTERNAL_LIBRARIES})
++  # 添加 Python::Python 到链接列表以解决 undefined symbol 错误
++  target_link_libraries(onnxruntime_pybind11_state PRIVATE ${onnxruntime_CUSTOM_EXTERNAL_LIBRARIES} Python::Python)
+ else()
+-  target_link_libraries(onnxruntime_pybind11_state PRIVATE ${onnxruntime_EXTERNAL_LIBRARIES})
++  # 添加 Python::Python 到链接列表以解决 undefined symbol 错误
++  target_link_libraries(onnxruntime_pybind11_state PRIVATE ${onnxruntime_EXTERNAL_LIBRARIES} Python::Python)
+ endif()
+ 
+ set_target_properties(onnxruntime_pybind11_state PROPERTIES PREFIX "")

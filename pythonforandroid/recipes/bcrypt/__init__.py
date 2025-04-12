@@ -1,14 +1,14 @@
-from pythonforandroid.recipe import CompiledComponentsPythonRecipe, Recipe
+from pythonforandroid.recipe import CompiledComponentsPythonRecipe, Recipe, PyProjectRecipe
 
 
-class BCryptRecipe(CompiledComponentsPythonRecipe):
+class BCryptRecipe(PyProjectRecipe):
     name = 'bcrypt'
     version = '3.1.7'
     url = 'https://github.com/pyca/bcrypt/archive/{version}.tar.gz'
     depends = ['openssl', 'cffi']
     call_hostpython_via_targetpython = False
 
-    def get_recipe_env(self, arch):
+    def get_recipe_env(self, arch, **kwargs):
         env = super().get_recipe_env(arch)
 
         openssl_recipe = Recipe.get_recipe('openssl', self.ctx)
