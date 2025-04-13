@@ -1,0 +1,16 @@
+diff --git a/configure b/configure
+old mode 100644
+new mode 100755
+diff --git a/gen_uuid.c b/gen_uuid.c
+index c7b71f2..77308d4 100644
+--- a/gen_uuid.c
++++ b/gen_uuid.c
+@@ -87,6 +87,8 @@
+ #include <sys/syscall.h>
+ #endif
+ 
++#include <sys/file.h>
++
+ #include "all-io.h"
+ #include "uuidP.h"
+ #include "uuidd.h"

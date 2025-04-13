@@ -59,6 +59,12 @@ class onnxruntimeRecipe(NDKRecipe):
     
     def get_recipe_env(self, arch):
         env = super().get_recipe_env(arch)
+        env["http_proxy"] = "http://127.0.0.1:7890"
+        env["https_proxy"] = "http://127.0.0.1:7890"
+        env["HTTP_PROXY"] = "http://127.0.0.1:7890"
+        env["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+        env["ALL_PROXY"] = "http://127.0.0.1:7890"
+        env["all_proxy"] = "http://127.0.0.1:7890"
         env['ANDROID_NDK'] = self.ctx.ndk_dir
         env['ANDROID_SDK'] = self.ctx.sdk_dir
         env['ANDROID_API'] = str(self.ctx.android_api)

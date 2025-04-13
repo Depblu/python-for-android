@@ -1,13 +1,13 @@
 from pythonforandroid.recipe import RustCompiledComponentsRecipe
 from os.path import basename, dirname, exists, isdir, isfile, join, realpath, split
 
-class primpRecipe(RustCompiledComponentsRecipe):
-    version = '0.14.0'
-    url = f'https://github.com/deedy5/primp/archive/refs/tags/v{version}.tar.gz'
+class orjsonRecipe(RustCompiledComponentsRecipe):
+    version = '3.10.16'
+    url = f'https://github.com/ijl/orjson/archive/refs/tags/{version}.tar.gz'
     depends = []
     #hostpython_prerequisites = ['setuptools', 'wheel']
-    site_packages_name = 'primp'
+    site_packages_name = 'orjson'
 
         
 
-recipe = primpRecipe()
+recipe = orjsonRecipe()

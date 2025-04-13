@@ -83,7 +83,7 @@ class Python3Recipe(TargetPythonRecipe):
             ("patches/py3.8.1_fix_cortex_a8.patch", version_starts_with("3.11")),
         ]
 
-    depends = ['hostpython3', 'sqlite3', 'openssl', 'libffi']
+    depends = ['hostpython3', 'sqlite3', 'openssl', 'libffi', 'libuuid', 'libbz2', 'liblzma']
     # those optional depends allow us to build python compression modules:
     #   - _bz2.so
     #   - _lzma.so
@@ -199,6 +199,9 @@ class Python3Recipe(TargetPythonRecipe):
 
     def get_recipe_env(self, arch=None, with_flags_in_cc=True):
         env = super().get_recipe_env(arch)
+        
+        libuuid_build_dir = Recipe.get_recipe("libuuid", self.ctx).get_build_dir(arch.arch)
+        
         env['HOSTARCH'] = arch.command_prefix
 
         env['CC'] = arch.get_clang_exe(with_target=True)
@@ -213,11 +216,12 @@ class Python3Recipe(TargetPythonRecipe):
             [
                 '-fPIC',
                 '-DANDROID',
-                '-UHAVE_LIBB2'
+                '-UHAVE_LIBB2',
+                f'-I{libuuid_build_dir}'
             ]
         )
 
-        env['LDFLAGS'] = env.get('LDFLAGS', '')
+        env['LDFLAGS'] = env.get('LDFLAGS', '') + f' -L{libuuid_build_dir}/.libs'
         
         env['LIBB2_LIBS'] = ' '
         
@@ -321,7 +325,12 @@ class Python3Recipe(TargetPythonRecipe):
 
         env = self.get_recipe_env(arch)
         env = self.set_libs_flags(env, arch)
-
+        
+        print("////////// env export commands:")
+        for key, value in env.items():
+            print(f"export {key}='{value}'")
+        print("/////////////")
+        
         android_build = sh.Command(
             join(recipe_build_dir,
                  'config.guess'))().strip()
