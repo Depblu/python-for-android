@@ -1,0 +1,18 @@
+--- a/CMakeLists.txt      2025-02-12 08:00:09.000000000 +0800
++++ b/CMakeLists.txt      2025-04-16 16:33:48.148504339 +0800
+@@ -487,7 +487,13 @@
+ else()
+   target_link_libraries(arrow_python PRIVATE ${PYARROW_CPP_LINK_LIBS})
+ endif()
+-target_link_libraries(arrow_python PUBLIC Python3::NumPy)
++# Link NumPy AND explicitly link the full path to the Python library
++target_link_libraries(arrow_python PUBLIC
++    Python3::NumPy
++    # Python3::Module # Keep commented out or remove if it causes issues
++    #/home/lius/.local/share/python-for-android/build/other_builds/python3-libbz2-liblzma/arm64-v8a__ndk_target_26/python3/android-build/libpython3.11.so
++    ${PYTHON3_LIBRARIES}
++)
+ target_compile_definitions(arrow_python PRIVATE ARROW_PYTHON_EXPORTING)
+ set_target_properties(arrow_python PROPERTIES VERSION "${PYARROW_FULL_SO_VERSION}"
+                                               SOVERSION "${PYARROW_SO_VERSION}")
+

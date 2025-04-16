@@ -1,0 +1,74 @@
+diff --git a/cmake_modules/FindPython3Alt.cmake b/cmake_modules/FindPython3Alt.cmake
+index a057be8da..d4d9a1b41 100644
+--- a/cmake_modules/FindPython3Alt.cmake
++++ b/cmake_modules/FindPython3Alt.cmake
+@@ -45,13 +45,56 @@
+   # We need libpython to be present, so ask for the full "Development"
+   # component on CMake < 3.18, where "Development.Module" is not
+   # available.
+-  find_package(Python3 ${Python3Alt_FIND_PACKAGE_OPTIONS} COMPONENTS Interpreter
+-                                                                     Development NumPy)
++  find_package(Python3 ${Python3Alt_FIND_PACKAGE_OPTIONS} COMPONENTS Interpreter Development)
+ else()
++  # For cross-compilation, don't ask find_package for NumPy component, handle it manually later
+   find_package(Python3 ${Python3Alt_FIND_PACKAGE_OPTIONS}
+-               COMPONENTS Interpreter Development.Module NumPy)
++               COMPONENTS Interpreter Development.Module)
+ endif()
+ 
++# Manual handling for NumPy in cross-compilation or specific hint scenarios
++unset(NUMPY_INCLUDE_DIRS)
++unset(Python3_NumPy_FOUND)
++
++# Check if Development.Module was found, NumPy depends on it
++if(CMAKE_VERSION VERSION_LESS 3.18.0)
++  set(_Python3_Dev_Component_Found ${Python3_Development_FOUND})
++else()
++  set(_Python3_Dev_Component_Found ${Python3_Development.Module_FOUND})
++endif()
++
++# Use the hint provided via environment / CMake options
++# Check CMAKE_PREFIX_PATH first as it's often set by the build system
++set(_numpy_include_hint "")
++if(DEFINED Python3_NumPy_INCLUDE_DIRS)
++  set(_numpy_include_hint "${Python3_NumPy_INCLUDE_DIRS}")
++endif()
++
++# Check if the hint directory exists and contains numpy headers
++if(_Python3_Dev_Component_Found AND _numpy_include_hint AND EXISTS "${_numpy_include_hint}/numpy/arrayobject.h")
++  set(NUMPY_INCLUDE_DIRS "${_numpy_include_hint}")
++  set(Python3_NumPy_FOUND TRUE)
++  # Manually create the NumPy target properties if needed by other parts of the build
++  if(NOT TARGET Python3::NumPy)
++    add_library(Python3::NumPy INTERFACE IMPORTED)
++    set_property(TARGET Python3::NumPy PROPERTY INTERFACE_INCLUDE_DIRECTORIES "${NUMPY_INCLUDE_DIRS}")
++    if(TARGET Python3::Module)
++      # Link NumPy conceptually to the Python module target
++       set_property(TARGET Python3::NumPy PROPERTY INTERFACE_LINK_LIBRARIES Python3::Module)
++    endif()
++  endif()
++else()
++  set(Python3_NumPy_FOUND FALSE)
++  if(NOT _Python3_Dev_Component_Found)
++      message(STATUS "NumPy component requires the Development.Module component to be found.")
++  elseif(NOT _numpy_include_hint)
++      message(STATUS "NumPy include hint (Python3_NumPy_INCLUDE_DIRS) not provided or empty.")
++  elseif(NOT EXISTS "${_numpy_include_hint}/numpy/arrayobject.h")
++      message(STATUS "Provided NumPy include hint '${_numpy_include_hint}' does not exist or doesn't contain 'numpy/arrayobject.h'.")
++  endif()
++endif()
++
++
+ if(NOT Python3_FOUND)
+   return()
+ endif()
+@@ -61,7 +104,7 @@
+ set(PYTHON_LIBRARIES ${Python3_LIBRARIES})
+ set(PYTHON_OTHER_LIBS)
+ 
+-get_target_property(NUMPY_INCLUDE_DIRS Python3::NumPy INTERFACE_INCLUDE_DIRECTORIES)
++# NUMPY_INCLUDE_DIRS is now set manually above if found via hint
+ 
+ # CMake's python3_add_library() doesn't apply the required extension suffix,
+ # detect it ourselves.
+

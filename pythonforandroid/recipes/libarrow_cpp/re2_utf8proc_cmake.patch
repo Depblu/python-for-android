@@ -1,0 +1,30 @@
+diff --git a/cpp/cmake_modules/ThirdpartyToolchain.cmake b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+index abfe6d274..1cb371d45 100644
+--- a/cpp/cmake_modules/ThirdpartyToolchain.cmake
++++ b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+@@ -2761,6 +2761,12 @@ macro(build_re2)
+       "${RE2_PREFIX}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}re2${CMAKE_STATIC_LIBRARY_SUFFIX}")
+ 
+   set(RE2_CMAKE_ARGS ${EP_COMMON_CMAKE_ARGS} "-DCMAKE_INSTALL_PREFIX=${RE2_PREFIX}")
++  if(ANDROID_ABI)
++    list(APPEND RE2_CMAKE_ARGS "-DANDROID_ABI=${ANDROID_ABI}")
++  endif()
++  if(ANDROID_PLATFORM)
++    list(APPEND RE2_CMAKE_ARGS "-DANDROID_PLATFORM=${ANDROID_PLATFORM}")
++  endif()
+ 
+   externalproject_add(re2_ep
+                       ${EP_COMMON_OPTIONS}
+@@ -2867,6 +2873,12 @@ macro(build_utf8proc)
+ 
+   set(UTF8PROC_CMAKE_ARGS ${EP_COMMON_CMAKE_ARGS}
+                           "-DCMAKE_INSTALL_PREFIX=${UTF8PROC_PREFIX}")
++  if(ANDROID_ABI)
++    list(APPEND UTF8PROC_CMAKE_ARGS "-DANDROID_ABI=${ANDROID_ABI}")
++  endif()
++  if(ANDROID_PLATFORM)
++    list(APPEND UTF8PROC_CMAKE_ARGS "-DANDROID_PLATFORM=${ANDROID_PLATFORM}")
++  endif()
+ 
+   externalproject_add(utf8proc_ep
+                       ${EP_COMMON_OPTIONS}

@@ -1,0 +1,17 @@
+diff --git a/setup.py b/setup.py
+index 60b9a696d..c3e55d6c0 100755
+--- a/setup.py
++++ b/setup.py
+@@ -266,9 +266,9 @@ class build_ext(_build_ext):
+ 
+             cmake_options = [
+                 f'-DCMAKE_INSTALL_PREFIX={install_prefix}',
+-                f'-DPYTHON_EXECUTABLE={sys.executable}',
+-                f'-DPython3_EXECUTABLE={sys.executable}',
+-                f'-DPYARROW_CXXFLAGS={self.cmake_cxxflags}',
++                #f'-DPYTHON_EXECUTABLE={sys.executable}',
++                #f'-DPython3_EXECUTABLE={sys.executable}',
++                #f'-DPYARROW_CXXFLAGS={self.cmake_cxxflags}',
+             ]
+ 
+             def append_cmake_bool(value, varname):
