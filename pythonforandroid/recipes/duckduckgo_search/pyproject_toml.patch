@@ -1,0 +1,13 @@
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -42,6 +42,9 @@
+
+ [tool.setuptools.dynamic]
+ version = {attr = "duckduckgo_search.version.__version__"}
+
++[tool.setuptools]
++packages = ["duckduckgo_search"]
++
+ [project.optional-dependencies]
+ dev = [
+     "mypy>=1.14.1",
