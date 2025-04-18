@@ -9,7 +9,7 @@ class ProtobufRecipe(CompiledComponentsPythonRecipe):
     version = '5.29.4'
     url = f'https://files.pythonhosted.org/packages/source/p/protobuf/protobuf-{version}.tar.gz'
     stl_lib_name = "c++_shared"
-    #hostpython_prerequisites = ["setuptools","pip"]
+    hostpython_prerequisites = ["setuptools","pip"]
 
     depends = ['python3']
     site_packages_name = 'protobuf'

@@ -7,34 +7,10 @@ from os.path import basename, dirname, exists, isdir, isfile, join, realpath, sp
 from pythonforandroid.logger import (
     logger, info, warning, debug, shprint, info_main, error)
 
-
-def ensure_file_link(source: str, target: str):
-    """
-    确保目标文件是源文件的软链接。
-    
-    参数:
-        source: 源文件路径
-        target: 目标软链接路径
-    """
-    if not exists(source):
-        error(f"源文件不存在: {source}")
-        return
-    
-    if exists(target):
-        if (isfile(target) or isdir(target)) and realpath(target) == realpath(source):
-            info(f"已经存在软链接: {target} -> {source}")
-        else:
-            error(f"目标文件或目录存在但不是指向源文件的软链接: {target}")
-    else:
-        info(f"创建软链接: {target} -> {source}")
-        shprint(sh.Command('ln'), '-s', source, target)
-
-
-
 class onnxruntimeRecipe(NDKRecipe):
     version = '1.21.0'
     url = f'git+https://github.com/microsoft/onnxruntime.git'
-    depends = ['numpy']
+    depends = ['numpy', 'python3_link_dep']
     patches = ['patches/p4a_build.patch']
     #hostpython_prerequisites = ['setuptools', 'wheel']
     #site_packages_name = 'onnxruntime'
@@ -103,11 +79,6 @@ class onnxruntimeRecipe(NDKRecipe):
             ndk_dir = self.ctx.ndk_dir
 
             print(f"lius debug log : ndk_dir = {ndk_dir}")
-            print(shprint(sh.Command('chmod'), '+x', f'{python_link_root}/python-config'))
-            ensure_file_link(f'{python_link_root}/python-config', f'{python_build_dir}/python{python_link_version}-config')
-            ensure_file_link(f'/home', f'{ndk_dir}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/home')
-            ensure_file_link(f'{python_include_root}', f'{python_build_dir}/include')
-            
             
             PYTHON_CORE_ROOT1=f"{python_build_dir}"
             PYTHON_CORE_ROOT2=f"{python_link_root}"

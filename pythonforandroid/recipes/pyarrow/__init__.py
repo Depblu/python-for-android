@@ -9,33 +9,13 @@ from pythonforandroid.logger import shprint
 import sh
 
 
-def ensure_file_link(source: str, target: str):
-    """
-    确保目标文件是源文件的软链接。
-    
-    参数:
-        source: 源文件路径
-        target: 目标软链接路径
-    """
-    if not exists(source):
-        error(f"源文件不存在: {source}")
-        return
-    
-    if exists(target):
-        if (isfile(target) or isdir(target)) and realpath(target) == realpath(source):
-            info(f"已经存在软链接: {target} -> {source}")
-        else:
-            error(f"目标文件或目录存在但不是指向源文件的软链接: {target}")
-    else:
-        info(f"创建软链接: {target} -> {source}")
-        shprint(sh.Command('ln'), '-s', source, target)
 
 class PyarrowRecipe(PyProjectRecipe):
     name = 'pyarrow'
     version = '19.0.1'
     url = f'https://files.pythonhosted.org/packages/source/p/pyarrow/pyarrow-{version}.tar.gz'
     #depends = ['libarrow_cpp', 'numpy']
-    depends = ['libarrow_cpp']
+    depends = ['libarrow_cpp', 'python3_link_dep']
     patches = ['setup_py.patch', 'cmakelists.patch', 'find_python_cmake.patch']
 
     call_hostpython_via_targetpython = False
