@@ -6,14 +6,16 @@ import sh
 from os.path import basename, dirname, exists, isdir, isfile, join, realpath, split
 from pythonforandroid.logger import (
     logger, info, warning, debug, shprint, info_main, error)
+import glob
 
-class onnxruntimeRecipe(NDKRecipe):
+class onnxruntimeRecipe(PyProjectRecipe):
     version = '1.21.0'
     url = f'git+https://github.com/microsoft/onnxruntime.git'
     depends = ['numpy', 'python3_link_dep']
-    patches = ['patches/p4a_build.patch']
+    patches = ['patches/p4a_build_debug.patch']
     #hostpython_prerequisites = ['setuptools', 'wheel']
     #site_packages_name = 'onnxruntime'
+    build_config = 'MinSizeRel'
 
     def download_if_necessary(self):
         info_main('Downloading {}'.format(self.name))
@@ -26,8 +28,17 @@ class onnxruntimeRecipe(NDKRecipe):
         self.download()
 
 
-    # TODO: delete when debug finish
+    # 
     def should_build(self, arch):
+        # 使用glob查找wheel文件
+        with current_directory(join(self.get_build_dir(arch.arch))):
+            res = glob.glob(f"p4a_android_build/{self.build_config}/dist/*.whl")
+            print("liusdebug", res)
+            
+            built_wheels = [realpath(whl) for whl in glob.glob(f"p4a_android_build/{self.build_config}/dist/*.whl")]
+            if built_wheels:
+                info(f'find onnxruntime wheel files: {built_wheels}, skip building')
+                return False
         return True
 
     def get_lib_dir(self, arch):
@@ -49,7 +60,7 @@ class onnxruntimeRecipe(NDKRecipe):
 
     def prebuild_arch(self, arch):
         super().prebuild_arch(arch)
-
+        
 
     def build_arch(self, arch):
         build_dir = join(self.get_build_dir(arch.arch))
@@ -99,7 +110,7 @@ class onnxruntimeRecipe(NDKRecipe):
 
             
             shprint(sh.Command(f"{build_dir}/build.sh"), 
-                    '--config', 'MinSizeRel',
+                    '--config', f'{self.build_config}',
                     '--android', 
                     '--android_abi', 'arm64-v8a', 
                     '--android_sdk_path', env['ANDROID_SDK'], 
@@ -112,11 +123,16 @@ class onnxruntimeRecipe(NDKRecipe):
                     '--cmake_extra_defines', 
                     f"CMAKE_PREFIX_PATH={PYTHON_CORE_ROOT1};{PYTHON_CORE_ROOT2};{NUMPY_SITE_PACKAGES}",
                     f"PYTHON_INCLUDE_DIR={python_include_root}",
-                    f"PYTHON_LIBRARY={python_link_root}/libpython{python_link_version}.so",
+                    #f"PYTHON_LIBRARY={python_link_root}/libpython{python_link_version}.so",
                     f"Python_NumPy_INCLUDE_DIRS={numpy_build_dir}/numpy/_core/include;{numpy_build_dir}/p4a_android_build/numpy/_core",
                     f"Python_FIND_STRATEGY='LOCATION'",
                     f"PYTHON_EXECUTABLE={self.ctx.hostpython}",
+                    f"CMAKE_HTTP_PROXY=http://127.0.0.1:7890",
+                    f"CMAKE_HTTPS_PROXY=http://127.0.0.1:7890",
                     _env=env)
+            
+            built_wheels = [realpath(whl) for whl in glob.glob(f"p4a_android_build/{self.build_config}/dist/*.whl")]
+            self.install_wheel(arch, built_wheels)
             
             
             

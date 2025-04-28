@@ -1,0 +1,13 @@
+diff --git a/cmake/CMakeLists.txt b/cmake/CMakeLists.txt
+index 2714e6f59..81d1600ac 100644
+--- a/cmake/CMakeLists.txt
++++ b/cmake/CMakeLists.txt
+@@ -5,6 +5,8 @@
+ # Minimum CMake required
+ cmake_minimum_required(VERSION 3.28)
+ 
++set(CMAKE_FIND_DEBUG_MODE TRUE)
++
+ # Don't let cmake set a default value for CMAKE_CUDA_ARCHITECTURES
+ cmake_policy(SET CMP0104 OLD)
+ # Project
