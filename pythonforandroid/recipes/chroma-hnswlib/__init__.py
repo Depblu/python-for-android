@@ -4,8 +4,8 @@ import sh
 from pythonforandroid.logger import shprint
 
 class chromahnswlibRecipe(PyProjectRecipe):
-    version = '1.0.0'
-    url = f'https://github.com/chroma-core/chroma/archive/refs/tags/{version}.tar.gz'
+    version = '0.7.6'
+    url = f'https://files.pythonhosted.org/packages/source/c/chroma_hnswlib/chroma_hnswlib-{version}.tar.gz'
     depends = []
     #hostpython_prerequisites = ['setuptools', 'wheel']
     site_packages_name = 'chroma-hnswlib'
@@ -79,60 +79,63 @@ class chromahnswlibRecipe(PyProjectRecipe):
         env['PYO3_CROSS_PYTHON_VERSION'] = python_version
         env['PYO3_CROSS_LIB_DIR'] = build_dir
         
+        # clang-17: error: unsupported argument 'native' to option '-march='
+        env['HNSWLIB_NO_NATIVE'] = "1"
+        
         return env
     
     
-    def build_arch(self, arch):
-        """
-        3. arboard 编译错误 (不支持 Android):** 发现构建过程中试图编译 arboard，而它不支持 Android。
-           根源: python_bindings 这个库依赖了 chroma-cli 这个命令行工具, chroma-cli 依赖 arboard。
-           解决方案: 从 python_bindings/Cargo.toml 移除了对 chroma-cli 的依赖，并在 bindings.rs 中移除了所有对 cli 函数的引用和注册。
-        """
-        build_dir = self.get_build_dir(arch.arch)
-        bindings_rs_path = join(build_dir, 'rust', 'python_bindings', 'src', 'bindings.rs')
-        cargo_toml_path = join(build_dir, 'rust', 'python_bindings', 'Cargo.toml')
+    # def build_arch(self, arch):
+    #     """
+    #     3. arboard 编译错误 (不支持 Android):** 发现构建过程中试图编译 arboard，而它不支持 Android。
+    #        根源: python_bindings 这个库依赖了 chroma-cli 这个命令行工具, chroma-cli 依赖 arboard。
+    #        解决方案: 从 python_bindings/Cargo.toml 移除了对 chroma-cli 的依赖，并在 bindings.rs 中移除了所有对 cli 函数的引用和注册。
+    #     """
+    #     build_dir = self.get_build_dir(arch.arch)
+    #     bindings_rs_path = join(build_dir, 'rust', 'python_bindings', 'src', 'bindings.rs')
+    #     cargo_toml_path = join(build_dir, 'rust', 'python_bindings', 'Cargo.toml')
 
-        print(f"Patching {bindings_rs_path} for Android build...")
+    #     print(f"Patching {bindings_rs_path} for Android build...")
 
-        # 注释掉 use chroma_cli::chroma_cli;
-        # 使用 try: except: 保证即使 sed 失败或文件不存在也能继续，避免中断构建
-        try:
-            shprint(sh.Command('sed'),
-                '-i',
-                r's|^use chroma_cli::chroma_cli;|\/\/ use chroma_cli::chroma_cli;|',
-                bindings_rs_path
-            )
-            print("Commented out 'use chroma_cli::chroma_cli;'")
-        except sh.ErrorReturnCode_1: # sed 找不到文件或模式时可能返回1
-            print(f"Failed to comment out 'use chroma_cli::chroma_cli;' in {bindings_rs_path}. File or line might not exist.")
-        except Exception as e:
-            print(f"An unexpected error occurred while patching 'use': {e}")
+    #     # 注释掉 use chroma_cli::chroma_cli;
+    #     # 使用 try: except: 保证即使 sed 失败或文件不存在也能继续，避免中断构建
+    #     try:
+    #         shprint(sh.Command('sed'),
+    #             '-i',
+    #             r's|^use chroma_cli::chroma_cli;|\/\/ use chroma_cli::chroma_cli;|',
+    #             bindings_rs_path
+    #         )
+    #         print("Commented out 'use chroma_cli::chroma_cli;'")
+    #     except sh.ErrorReturnCode_1: # sed 找不到文件或模式时可能返回1
+    #         print(f"Failed to comment out 'use chroma_cli::chroma_cli;' in {bindings_rs_path}. File or line might not exist.")
+    #     except Exception as e:
+    #         print(f"An unexpected error occurred while patching 'use': {e}")
 
 
-        # 注释掉函数体内的 chroma_cli(args);
-        # (\s* 匹配前面的空格)
-        try:
-            shprint(sh.Command('sed'),
-                '-i',
-                r's|^\s*chroma_cli(args);|\/\/ chroma_cli(args);|',
-                bindings_rs_path
-            )
-            print("Commented out 'chroma_cli(args);' call")
-        except sh.ErrorReturnCode_1:
-            print(f"Failed to comment out 'chroma_cli(args);' in {bindings_rs_path}. File or line might not exist.")
-        except Exception as e:
-            print(f"An unexpected error occurred while patching call: {e}")
+    #     # 注释掉函数体内的 chroma_cli(args);
+    #     # (\s* 匹配前面的空格)
+    #     try:
+    #         shprint(sh.Command('sed'),
+    #             '-i',
+    #             r's|^\s*chroma_cli(args);|\/\/ chroma_cli(args);|',
+    #             bindings_rs_path
+    #         )
+    #         print("Commented out 'chroma_cli(args);' call")
+    #     except sh.ErrorReturnCode_1:
+    #         print(f"Failed to comment out 'chroma_cli(args);' in {bindings_rs_path}. File or line might not exist.")
+    #     except Exception as e:
+    #         print(f"An unexpected error occurred while patching call: {e}")
             
-        #注释 rust/python_bindings/Cargo.toml中的'chroma-cli = { workspace = true }'
-        try:
-            shprint(sh.Command('sed'), '-i', r's|^chroma-cli = { workspace = true }|# chroma-cli = { workspace = true }|', cargo_toml_path)
-            print("Commented out 'chroma-cli = { workspace = true }' in Cargo.toml")
-        except sh.ErrorReturnCode_1:
-            print(f"Failed to comment out 'chroma-cli =' in {cargo_toml_path}. File or line might not exist.")
-        except Exception as e:
-            print(f"An unexpected error occurred while patching Cargo.toml: {e}")
+    #     #注释 rust/python_bindings/Cargo.toml中的'chroma-cli = { workspace = true }'
+    #     try:
+    #         shprint(sh.Command('sed'), '-i', r's|^chroma-cli = { workspace = true }|# chroma-cli = { workspace = true }|', cargo_toml_path)
+    #         print("Commented out 'chroma-cli = { workspace = true }' in Cargo.toml")
+    #     except sh.ErrorReturnCode_1:
+    #         print(f"Failed to comment out 'chroma-cli =' in {cargo_toml_path}. File or line might not exist.")
+    #     except Exception as e:
+    #         print(f"An unexpected error occurred while patching Cargo.toml: {e}")
 
-        # 调用父类的 build_arch 执行标准的 maturin 构建流程
-        super().build_arch(arch)
+    #     # 调用父类的 build_arch 执行标准的 maturin 构建流程
+    #     super().build_arch(arch)
 
 recipe = chromahnswlibRecipe()

@@ -50,6 +50,7 @@ public class PythonUtil {
         addLibraryIfExists(libsList, "SDL2_mixer", libsDir);
         addLibraryIfExists(libsList, "SDL2_ttf", libsDir);
         libsList.add("jni_dlopen_global");
+        //addLibraryIfExists(libsList, "jni_dlopen_global", libsDir);
         libsList.add("python3.5m");
         libsList.add("python3.6m");
         libsList.add("python3.7m");

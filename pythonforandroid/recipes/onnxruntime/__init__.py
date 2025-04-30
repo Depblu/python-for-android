@@ -29,7 +29,7 @@ class onnxruntimeRecipe(PyProjectRecipe):
 
 
     # 
-    def should_build(self, arch):
+    def should_build_internel(self, arch):
         # 使用glob查找wheel文件
         with current_directory(join(self.get_build_dir(arch.arch))):
             res = glob.glob(f"p4a_android_build/{self.build_config}/dist/*.whl")
@@ -108,28 +108,28 @@ class onnxruntimeRecipe(PyProjectRecipe):
             print(f"lius debug log : numpy_build_dir = {numpy_build_dir}")
             print(f"lius debug log : hostpython = {self.ctx.hostpython}")
 
-            
-            shprint(sh.Command(f"{build_dir}/build.sh"), 
-                    '--config', f'{self.build_config}',
-                    '--android', 
-                    '--android_abi', 'arm64-v8a', 
-                    '--android_sdk_path', env['ANDROID_SDK'], 
-                    '--android_api', env['ANDROID_API'], 
-                    '--android_ndk_path', env['ANDROID_NDK'], 
-                    '--android_cpp_shared', 
-                    '--enable_pybind', 
-                    '--build_wheel', 
-                    '--build_dir', f'{build_dir}/p4a_android_build', 
-                    '--cmake_extra_defines', 
-                    f"CMAKE_PREFIX_PATH={PYTHON_CORE_ROOT1};{PYTHON_CORE_ROOT2};{NUMPY_SITE_PACKAGES}",
-                    f"PYTHON_INCLUDE_DIR={python_include_root}",
-                    #f"PYTHON_LIBRARY={python_link_root}/libpython{python_link_version}.so",
-                    f"Python_NumPy_INCLUDE_DIRS={numpy_build_dir}/numpy/_core/include;{numpy_build_dir}/p4a_android_build/numpy/_core",
-                    f"Python_FIND_STRATEGY='LOCATION'",
-                    f"PYTHON_EXECUTABLE={self.ctx.hostpython}",
-                    f"CMAKE_HTTP_PROXY=http://127.0.0.1:7890",
-                    f"CMAKE_HTTPS_PROXY=http://127.0.0.1:7890",
-                    _env=env)
+            if self.should_build_internel(arch):
+                shprint(sh.Command(f"{build_dir}/build.sh"), 
+                        '--config', f'{self.build_config}',
+                        '--android', 
+                        '--android_abi', 'arm64-v8a', 
+                        '--android_sdk_path', env['ANDROID_SDK'], 
+                        '--android_api', env['ANDROID_API'], 
+                        '--android_ndk_path', env['ANDROID_NDK'], 
+                        '--android_cpp_shared', 
+                        '--enable_pybind', 
+                        '--build_wheel', 
+                        '--build_dir', f'{build_dir}/p4a_android_build', 
+                        '--cmake_extra_defines', 
+                        f"CMAKE_PREFIX_PATH={PYTHON_CORE_ROOT1};{PYTHON_CORE_ROOT2};{NUMPY_SITE_PACKAGES}",
+                        f"PYTHON_INCLUDE_DIR={python_include_root}",
+                        #f"PYTHON_LIBRARY={python_link_root}/libpython{python_link_version}.so",
+                        f"Python_NumPy_INCLUDE_DIRS={numpy_build_dir}/numpy/_core/include;{numpy_build_dir}/p4a_android_build/numpy/_core",
+                        f"Python_FIND_STRATEGY='LOCATION'",
+                        f"PYTHON_EXECUTABLE={self.ctx.hostpython}",
+                        f"CMAKE_HTTP_PROXY=http://127.0.0.1:7890",
+                        f"CMAKE_HTTPS_PROXY=http://127.0.0.1:7890",
+                        _env=env)
             
             built_wheels = [realpath(whl) for whl in glob.glob(f"p4a_android_build/{self.build_config}/dist/*.whl")]
             self.install_wheel(arch, built_wheels)

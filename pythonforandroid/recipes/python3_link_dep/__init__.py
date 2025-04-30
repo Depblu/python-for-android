@@ -107,6 +107,7 @@ class Python3LinkDepRecipe(Recipe):
             print(f"lius debug log : ndk_dir = {ndk_dir}")
             print(shprint(sh.Command('chmod'), '+x', f'{python_link_root}/python-config'))
             ensure_file_link(f'{python_link_root}/python-config', f'{python_build_dir}/python{python_link_version}-config')
+            ensure_file_link(f'{python_link_root}/libpython{python_link_version}.so', f'{python_build_dir}/libpython{python_link_version}.so')
             ensure_file_link(f'/home', f'{ndk_dir}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/home')
             ensure_file_link(f'{python_include_root}', f'{python_build_dir}/include')
             

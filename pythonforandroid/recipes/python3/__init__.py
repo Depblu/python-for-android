@@ -133,7 +133,7 @@ class Python3Recipe(TargetPythonRecipe):
     '''The directories that we want to omit for our python bundle'''
 
     stdlib_filen_blacklist = [
-        '*.py',
+        '*.pyc',
         '*.exe',
         '*.whl',
     ]
@@ -147,7 +147,7 @@ class Python3Recipe(TargetPythonRecipe):
     in our python bundle.'''
 
     site_packages_filen_blacklist = [
-        '*.py'
+        '*.pyc'
     ]
     '''The file extensions from site packages dir that we don't want to be
     included in our python bundle.'''
