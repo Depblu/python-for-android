@@ -1,24 +1,26 @@
---- Pillow/setup.py	2024-05-24 19:35:08.270160608 +0530
-+++ Pillow.mod/setup.py	2024-05-24 22:07:52.741495666 +0530
-@@ -39,6 +39,7 @@
- LCMS_ROOT = None
+diff --git a/setup.py b/setup.py
+index a85731d..b13c3f6 100644
+--- a/setup.py
++++ b/setup.py
+@@ -43,6 +43,7 @@ RAQM_ROOT = None
  TIFF_ROOT = None
+ WEBP_ROOT = None
  ZLIB_ROOT = None
 +WEBP_ROOT = None
  FUZZING_BUILD = "LIB_FUZZING_ENGINE" in os.environ
  
- if sys.platform == "win32" and sys.version_info >= (3, 13):
-@@ -150,6 +151,7 @@
+ if sys.platform == "win32" and sys.version_info >= (3, 14):
+@@ -154,6 +155,7 @@ def _dbg(s: str, tp: Any = None) -> None:
  
  
- def _find_library_dirs_ldconfig():
+ def _find_library_dirs_ldconfig() -> list[str]:
 +    return []
      # Based on ctypes.util from Python 2
  
      ldconfig = "ldconfig" if shutil.which("ldconfig") else "/sbin/ldconfig"
-@@ -460,15 +462,16 @@
-             "HARFBUZZ_ROOT": "harfbuzz",
-             "FRIBIDI_ROOT": "fribidi",
+@@ -490,18 +492,21 @@ class pil_build_ext(build_ext):
+             "RAQM_ROOT": "raqm",
+             "WEBP_ROOT": "libwebp",
              "LCMS_ROOT": "lcms2",
 +            "WEBP_ROOT": "libwebp",
              "IMAGEQUANT_ROOT": "libimagequant",
@@ -26,16 +28,24 @@
              root = globals()[root_name]
  
              if root is None and root_name in os.environ:
--                prefix = os.environ[root_name]
--                root = (os.path.join(prefix, "lib"), os.path.join(prefix, "include"))
+-                root_prefix = os.environ[root_name]
+-                root = (
+-                    os.path.join(root_prefix, "lib"),
+-                    os.path.join(root_prefix, "include"),
+-                )
++                # root_prefix = os.environ[root_name]
++                # root = (
++                #     os.path.join(root_prefix, "lib"),
++                #     os.path.join(root_prefix, "include"),
++                # )
 +                root = tuple(os.environ[root_name].split(":"))
  
              if root is None and pkg_config:
 +                continue
-                 if isinstance(lib_name, tuple):
-                     for lib_name2 in lib_name:
-                         _dbg(f"Looking for `{lib_name2}` using pkg-config.")
-@@ -495,14 +498,6 @@
+                 if isinstance(lib_name, str):
+                     _dbg(f"Looking for `{lib_name}` using pkg-config.")
+                     root = pkg_config(lib_name)
+@@ -528,14 +533,6 @@ class pil_build_ext(build_ext):
                  for include_dir in include_root:
                      _add_directory(include_dirs, include_dir)
  
@@ -50,7 +60,7 @@
          # include, rpath, if set as environment variables:
          for k in ("C_INCLUDE_PATH", "CPATH", "INCLUDE"):
              if k in os.environ:
-@@ -514,13 +509,10 @@
+@@ -547,13 +544,10 @@ class pil_build_ext(build_ext):
                  for d in os.environ[k].split(os.path.pathsep):
                      _add_directory(library_dirs, d)
  
@@ -65,7 +75,7 @@
              pass
  
          elif sys.platform == "cygwin":
-@@ -614,7 +606,7 @@
+@@ -648,7 +642,7 @@ class pil_build_ext(build_ext):
          # FIXME: check /opt/stuff directories here?
  
          # standard locations
